@@ -9,6 +9,25 @@ export function createFlightAudio(onStatus: (message: string) => void) {
   const nodes: AudioScheduledSourceNode[] = [];
   let synthetic: { engine: GainNode; wind: GainNode; rain: GainNode; rumble: GainNode; tones: OscillatorNode[] } | undefined;
   let loading: Promise<void> | undefined;
+  let enableVersion = 0;
+  type PlaybackSession = { type: string };
+  let playbackSession: PlaybackSession | undefined, previousSessionType: string | undefined;
+  function playbackMode(on: boolean) {
+    // Supported iOS browsers can explicitly route Web Audio as media playback.
+    // Feature detection keeps this optional on other browsers.
+    try {
+      if (typeof navigator === 'undefined') return;
+      const session = (navigator as Navigator & { audioSession?: PlaybackSession }).audioSession;
+      if (!session) return;
+      if (on) {
+        if (!playbackSession) { playbackSession = session; previousSessionType = session.type; }
+        session.type = 'playback';
+      } else if (playbackSession) {
+        if (playbackSession.type === 'playback') playbackSession.type = previousSessionType ?? 'auto';
+        playbackSession = undefined; previousSessionType = undefined;
+      }
+    } catch { /* Playback mode is an optional browser capability. */ }
+  }
   function noise(frequency: number, type: BiquadFilterType) {
     const buffer = ctx!.createBuffer(1, ctx!.sampleRate * 4, ctx!.sampleRate), data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -50,11 +69,30 @@ export function createFlightAudio(onStatus: (message: string) => void) {
     gain.gain.value = strength; source.connect(gain).connect(filter); source.start(); source.onended = () => { source.disconnect(); gain.disconnect(); };
   }
   return {
+    ready() { return enabled && ctx?.state === 'running'; },
     async enable(value: boolean) {
       enabled = value;
-      if (!value) { if (ctx) master.gain.setTargetAtTime(0, ctx.currentTime, .05); return; }
-      if (!ctx) init(); await ctx!.resume(); if (ctx!.state !== 'running') throw new Error('Click sound again to allow audio.');
-      loading ??= load(); await loading;
+      const version = ++enableVersion;
+      if (!value) { playbackMode(false); if (ctx) master.gain.setTargetAtTime(0, ctx.currentTime, .05); return; }
+      if (disposed) return;
+      playbackMode(true);
+      if (!ctx) init();
+      const context = ctx!;
+      // Call resume inside each trusted gesture. A touch-start attempt may still
+      // be pending when a later, valid touch-end/click arrives on mobile Safari.
+      const resumed = context.state === 'running' ? Promise.resolve() : context.resume();
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          resumed,
+          new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Tap to enable sound.')), 1800); }),
+        ]);
+      } finally { clearTimeout(timeout); }
+      if (disposed || !enabled || version !== enableVersion) return;
+      if (context.state !== 'running') throw new Error('Tap to enable sound.');
+      // Synthesized sound can play immediately; optional AI downloads must not
+      // keep the sound control waiting or prevent later recovery gestures.
+      loading ??= load();
     },
     volume(value: number) { volume = Math.max(0, Math.min(1, value)); },
     reset(s: FlightState) { previousTouchdown = s.touchdown; nextThunder = s.time + 12; },
@@ -77,6 +115,6 @@ export function createFlightAudio(onStatus: (message: string) => void) {
       if (running && weather === 'storm' && s.time >= nextThunder) { oneShot('thunder', .5); nextThunder = s.time + 18; }
       previousTouchdown = s.touchdown;
     },
-    dispose() { disposed = true; nodes.forEach(n => { try { n.stop(); n.disconnect(); } catch {} }); void ctx?.close(); assets = {}; layers = {}; },
+    dispose() { disposed = true; playbackMode(false); enabled = false; enableVersion++; nodes.forEach(n => { try { n.stop(); n.disconnect(); } catch {} }); void ctx?.close(); assets = {}; layers = {}; },
   };
 }

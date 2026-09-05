@@ -59,3 +59,5 @@ kbd{font:11px ui-monospace,SFMono-Regular,monospace;display:inline-flex;align-it
 }
 @media(max-width:380px){.session-controls{gap:3px}.session-controls button{font-size:10px;padding:5px}.session-controls button>span{display:none}.brand{font-size:10px!important}.throttle{flex-basis:100%}.flight-map.map-minimized{width:108px}.view-controls button{padding:5px;font-size:10px}}
 @media(max-height:500px) and (max-width:950px){#console-content{max-height:48dvh}.flight-header .brand{font-size:11px}.flight-map:not(.map-minimized){max-height:calc(100dvh - 125px)}.pause-banner{top:40%}}
+.playback .sound-retry{border:1px solid var(--accent);color:var(--accent);font-size:12px;min-height:44px;white-space:nowrap}.sound-toggle{white-space:normal;text-align:left}
+@media(max-width:380px){.playback{flex-wrap:wrap}.playback .sound-retry{flex-basis:100%}}

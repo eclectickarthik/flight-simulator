@@ -9,13 +9,13 @@ const times = [ ['day', 'Day', Sun], ['sunset', 'Sunset', Sun], ['night', 'Night
 function minutes(seconds: number | null) { if (seconds === null) return '—'; return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`; }
 export default function Home() {
   const mount = useRef<HTMLDivElement>(null), sim = useRef<SimHandle | null>(null);
-  const [data, setData] = useState<Telemetry>({ ...initialState(ROUTES[0], 'Parking'), running: true, audioStatus: 'AI clips pending · synthesized fallback' });
+  const [data, setData] = useState<Telemetry>({ ...initialState(ROUTES[0], 'Parking'), running: true, audioReady: false, audioStatus: 'AI clips pending · synthesized fallback' });
   const [routeId, setRouteId] = useState(ROUTES[0].id), [weather, setWeather] = useState<Weather>('clear'), [time, setTime] = useState<TimeOfDay>('night');
   const [view, setView] = useState<View>('Orbit'), [rate, setRate] = useState(1), [audio, setAudio] = useState(true), [volume, setVolume] = useState(50);
   const [sideOpen, setSideOpen] = useState(true), [bottomOpen, setBottomOpen] = useState(true), [error, setError] = useState(''), [ready, setReady] = useState(false), [soundBusy, setSoundBusy] = useState(false);
-  const audioWanted=useRef(true),audioStarted=useRef(false);
+  const audioWanted=useRef(true), audioRequest=useRef(0);
   const [loadingStage,setLoadingStage]=useState('Downloading flight simulator…');
-  const [audioNeedsGesture,setAudioNeedsGesture]=useState(true),[seed,setSeed]=useState('94'),[appliedSeed,setAppliedSeed]=useState(94);
+  const [seed,setSeed]=useState('94'),[appliedSeed,setAppliedSeed]=useState(94);
   const route = ROUTES.find(r => r.id === routeId)!;
   useEffect(() => {
     let active=true;
@@ -34,9 +34,18 @@ export default function Home() {
         });
       } catch { if(active)setError('The simulator could not load. Check your connection and reload; a browser with WebGL is required.'); }
     })();
-    const unlock=async()=>{if(!audioWanted.current || audioStarted.current || !sim.current)return;audioStarted.current=true;try{await sim.current.sound(true);if(active)setAudioNeedsGesture(false);}catch{audioStarted.current=false;}};
-    window.addEventListener('pointerdown',unlock,{capture:true});window.addEventListener('keydown',unlock,{capture:true});
-    return()=>{active=false;window.removeEventListener('pointerdown',unlock,{capture:true});window.removeEventListener('keydown',unlock,{capture:true});sim.current?.dispose();};
+    const unlock = () => {
+      if (!audioWanted.current || !sim.current || sim.current.soundReady()) return;
+      // No optimistic 'started' flag: a pending resume must not block the next tap.
+      void sim.current.sound(true).catch(() => {});
+    };
+    const gesture = (event: Event) => {
+      if ((event.target as HTMLElement)?.closest?.('[data-audio-control]')) return;
+      unlock();
+    };
+    const events = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+    for (const event of events) window.addEventListener(event, gesture, {capture:true});
+    return()=>{active=false;audioRequest.current++;for(const event of events)window.removeEventListener(event,gesture,{capture:true});sim.current?.dispose();};
   }, []);
   function applySeed(value:number){if(!Number.isInteger(value)||value<0||value>4294967295)return;setSeed(String(value));setAppliedSeed(value);sim.current?.seed(value);}
   const hold = (key: string) => ({
@@ -46,7 +55,20 @@ export default function Home() {
     onKeyUp: (event: React.KeyboardEvent<HTMLButtonElement>) => { if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); sim.current?.release(key); } },
     onBlur: () => sim.current?.release(key),
   });
-  async function toggleAudio() { if(soundBusy)return;const enabled=!audioWanted.current;audioWanted.current=enabled;setAudio(enabled);setSoundBusy(true);try{await sim.current?.sound(enabled);if(enabled){audioStarted.current=true;setAudioNeedsGesture(false);}}catch{audioStarted.current=false;setAudioNeedsGesture(true);}finally{setSoundBusy(false);} }
+  async function setSound(enabled: boolean) {
+    if (!sim.current) return;
+    const request = ++audioRequest.current;
+    audioWanted.current=enabled;setAudio(enabled);setSoundBusy(enabled);
+    try { await sim.current.sound(enabled); }
+    catch { /* The visible retry stays available when the browser blocks playback. */ }
+    finally {
+      if(request === audioRequest.current) {
+        setSoundBusy(false);
+        setData(previous => ({...previous,audioReady:sim.current?.soundReady() ?? false}));
+      }
+    }
+  }
+  function toggleAudio() { void setSound(!audioWanted.current || !sim.current?.soundReady()); }
   return <main className={`flight-app ${sideOpen ? 'side-open' : ''} ${bottomOpen ? 'bottom-open' : ''} ${view === 'Cockpit' ? 'cockpit-view' : ''}`}>
     <div ref={mount} className="world" />
     {!ready && <div className="loading-screen" aria-busy={!error}>
@@ -71,7 +93,7 @@ export default function Home() {
         <section><h3>Terrain seed</h3><form className="seed-form" onSubmit={e=>{e.preventDefault();applySeed(Number(seed));}}><label htmlFor="terrain-seed">Seed number</label><div><input id="terrain-seed" type="number" min="0" max="4294967295" step="1" required value={seed} onChange={e=>setSeed(e.target.value)}/><button type="submit">Generate</button></div><button type="button" onClick={()=>applySeed(crypto.getRandomValues(new Uint32Array(1))[0])}>New seed</button></form><p className="setting-note">Seed {appliedSeed} · same seed, same terrain.<br/>Airports and runways stay in place.</p></section>
         <section><h3>Weather</h3><div className="option-grid">{weatherOptions.map(([id, label, Icon]) => <button className={id === weather ? 'selected' : ''} aria-pressed={id === weather} key={id} onClick={() => { setWeather(id); sim.current?.weather(id); }}><Icon size={17} />{label}</button>)}</div></section>
         <section><h3>Time of day</h3><div className="time-options">{times.map(([id, label, Icon]) => <button className={id === time ? 'selected' : ''} aria-pressed={id === time} key={id} onClick={() => { setTime(id); sim.current?.timeOfDay(id); }}><Icon size={17} />{label}</button>)}</div></section>
-        <section><h3>Engine & weather sound</h3><button className="sound-toggle" aria-pressed={audio} disabled={soundBusy || !ready} onClick={toggleAudio}>{audio ? <Volume2 size={18} /> : <VolumeX size={18} />}{soundBusy ? 'Loading sound…' : audio ? 'Sound on' : 'Enable sound'}</button><label className="volume">Volume <input aria-label="Sound volume" type="range" min="0" max="100" value={volume} onChange={e => { const v = Number(e.target.value); setVolume(v); sim.current?.volume(v / 100); }} /><span>{volume}%</span></label><p className="setting-note">{audio && audioNeedsGesture ? 'Sound on · starts with your first tap or click.' : data.audioStatus}</p></section>
+        <section><h3>Engine & weather sound</h3><button className="sound-toggle" data-audio-control aria-pressed={audio && data.audioReady} disabled={!ready} onClick={toggleAudio}>{audio ? <Volume2 size={18} /> : <VolumeX size={18} />}{soundBusy && !data.audioReady ? 'Tap again to enable sound' : audio && data.audioReady ? 'Sound on' : 'Tap to enable sound'}</button><label className="volume">Volume <input aria-label="Sound volume" type="range" min="0" max="100" value={volume} onChange={e => { const v = Number(e.target.value); setVolume(v); sim.current?.volume(v / 100); }} /><span>{volume}%</span></label><p className="setting-note">{!audio ? 'Sound off' : !data.audioReady ? 'Your browser needs a tap to allow playback.' : !data.running ? 'Sound paused with the simulation.' : !data.engineOn && data.onGround && weather !== 'rain' && weather !== 'storm' ? 'Engines are off. Switch Aircraft On to hear engine sound.' : data.audioStatus}</p></section>
         <p className="touch-help">Touch controls: hold arrows to pitch / roll, hold A / D to steer, and slide throttle. Hold Brakes to stop. Drag the scene to orbit; pinch to zoom. Landscape gives you more room.</p>
         <details className="control-help"><summary>Keyboard controls</summary><p>↑ Nose down · ↓ Nose up<br />← / → Bank left / right<br />A / D Rudder & ground steering<br />W / S Throttle up / down<br />Space / B Hold brakes · L Landing gear<br />G Cycle flaps · F Autopilot<br />E Aircraft on/off · V Parking brake<br />Esc Pause / resume entire simulation</p></details>
       </div>
@@ -87,7 +109,7 @@ export default function Home() {
           <label className="throttle"><span>THROTTLE <b>{Math.round(data.throttle * 100)}%</b></span><input aria-label="Engine throttle" type="range" min="0" max="100" disabled={!data.engineOn} value={Math.round(data.throttle * 100)} onChange={e => sim.current?.throttle(Number(e.target.value) / 100)} /><small>W / S</small></label>
           <div className="configuration"><button onClick={() => sim.current?.press('l')} disabled={data.onGround} title={data.onGround ? 'Gear stays down while on the ground' : 'Toggle gear (L)'}><span>L · GEAR</span><strong>{Math.abs(data.gear - data.gearTarget) > .05 ? 'MOVING' : data.gearTarget ? 'DOWN' : 'UP'}</strong></button><button onClick={() => sim.current?.press('g')}><span>G · FLAPS</span><strong>{Math.round(data.flapTarget * 30)}°</strong></button><button className={`brakes ${data.braking ? 'selected' : ''}`} aria-label="Space or B — hold brakes" aria-pressed={data.braking} {...hold('b')}><kbd>Space / B</kbd><strong>BRAKES</strong></button><button aria-label="Toggle parking brake" aria-pressed={data.parkingBrake} className={data.parkingBrake ? 'selected' : ''} onClick={() => sim.current?.parkingBrake(!data.parkingBrake)}><span>V · PARK</span><strong>{data.parkingBrake ? 'SET' : 'RELEASED'}</strong></button></div>
         </div>
-        <div className="console-bottom"><div className="phase-controls">{(['Parking', 'Takeoff', 'Cruise', 'Landing'] as Practice[]).map((phase, i) => <button key={phase} disabled={!ready} onClick={() => sim.current?.practice(phase)}><span className="phase-number">0{i + 1}</span>{phase}</button>)}</div><div className="playback"><button title="Reset flight" aria-label="Reset flight" onClick={() => sim.current?.practice('Parking')}><RotateCcw size={17} /></button><button aria-label="Change simulation speed" onClick={() => { const next = rate === 1 ? 2 : rate === 2 ? 4 : 1; setRate(next); sim.current?.rate(next); }}>{rate}×</button><button className={`play engine-power ${data.engineOn ? 'engine-running' : ''}`} aria-pressed={data.engineOn} aria-label={data.engineOn ? 'Turn aircraft off' : 'Turn aircraft on'} disabled={!ready} onClick={() => sim.current?.engine(!data.engineOn)}><Power size={16} />{data.engineOn ? 'Aircraft On' : 'Aircraft Off'}<kbd>E</kbd></button></div></div>
+        <div className="console-bottom"><div className="phase-controls">{(['Parking', 'Takeoff', 'Cruise', 'Landing'] as Practice[]).map((phase, i) => <button key={phase} disabled={!ready} onClick={() => sim.current?.practice(phase)}><span className="phase-number">0{i + 1}</span>{phase}</button>)}</div><div className="playback">{ready && audio && !data.audioReady && <button className="sound-retry" data-audio-control onClick={() => void setSound(true)}><Volume2 size={16}/><span>Tap for sound</span></button>}<button title="Reset flight" aria-label="Reset flight" onClick={() => sim.current?.practice('Parking')}><RotateCcw size={17} /></button><button aria-label="Change simulation speed" onClick={() => { const next = rate === 1 ? 2 : rate === 2 ? 4 : 1; setRate(next); sim.current?.rate(next); }}>{rate}×</button><button className={`play engine-power ${data.engineOn ? 'engine-running' : ''}`} aria-pressed={data.engineOn} aria-label={data.engineOn ? 'Turn aircraft off' : 'Turn aircraft on'} disabled={!ready} onClick={() => sim.current?.engine(!data.engineOn)}><Power size={16} />{data.engineOn ? 'Aircraft On' : 'Aircraft Off'}<kbd>E</kbd></button></div></div>
       </div>
     </section>
     <footer><span><Navigation size={12} /> {(route.distance / 1000).toFixed(2)} KM SCENIC ROUTE</span><span>Illustrative simulation · Not for flight training</span></footer>

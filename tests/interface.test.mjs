@@ -32,9 +32,9 @@ test('airport overview shows all three airports, ATC towers and ground-map links
 test('Summer, Night and sound are selected by default, with a terrain seed control',()=>{
   const html=renderToStaticMarkup(React.createElement(Home));
   const buttons=[...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].map(m=>({attributes:m[1],text:m[2].replace(/<[^>]*>/g,'')}));
-  for(const label of ['Summer','Night','Sound on'])assert.ok(buttons.some(b=>b.text===label&&b.attributes.includes('aria-pressed="true"')),label);
+  for(const label of ['Summer','Night'])assert.ok(buttons.some(b=>b.text===label&&b.attributes.includes('aria-pressed="true"')),label);
 
-  assert.ok(html.includes('Sound on'));assert.ok(html.includes('value="94"'));assert.ok(html.includes('Generate'));assert.ok(html.includes('aria-label="Close settings"'));
+  assert.ok(html.includes('Tap to enable sound'));assert.ok(html.includes('Your browser needs a tap to allow playback.'));assert.ok(html.includes('value="94"'));assert.ok(html.includes('Generate'));assert.ok(html.includes('aria-label="Close settings"'));
   assert.ok(!html.includes('side-toggle'));assert.ok(!html.includes('Sunny'));
 });
 test('cockpit has instrument displays plus real engine, autopilot and parking-brake buttons',()=>{

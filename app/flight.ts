@@ -7,7 +7,7 @@ import { createFlightAudio } from './audio';
 import { createInputState, createSimulationClock } from './controls';
 import { createHangarCamera } from './orbit-camera';
 import { initialState, stepFlight, toggleGear, cycleFlaps, setEngine, setAutopilot, clamp, ROUTES, type FlightState, type Weather, type TimeOfDay, type Route, type View, type Practice } from './dynamics';
-export type Telemetry = FlightState & { running: boolean; audioStatus: string };
+export type Telemetry = FlightState & { running: boolean; audioStatus: string; audioReady: boolean };
 export type SimHandle = ReturnType<typeof createFlight>;
 export function createFlight(host: HTMLDivElement, update: (data: Telemetry) => void, callbacks: { onReady?: () => void; onError?: () => void } = {}) {
   const mobile = window.matchMedia('(pointer: coarse)').matches;
@@ -40,7 +40,7 @@ export function createFlight(host: HTMLDivElement, update: (data: Telemetry) => 
   window.addEventListener('pointerup', pointerUp); window.addEventListener('pointercancel', pointerUp);
   const clock = createSimulationClock();
   const input = createInputState(), offset = new THREE.Vector3(), look = new THREE.Vector3(), previous = new THREE.Vector3();
-  function emit() { if (!disposed) update({ ...state, running, audioStatus }); }
+  function emit() { if (!disposed) update({ ...state, running, audioStatus, audioReady: audio.ready() }); }
   function applyLighting() {
     const night = timeOfDay === 'night', sunset = timeOfDay === 'sunset', storm = weather === 'storm', wet = weather === 'rain' || storm, snow = weather === 'snow';
     sun.intensity = night ? .22 : storm ? .45 : wet || snow ? 1 : 3; ambient.intensity = night ? .38 : storm ? 1.2 : 2.1;
@@ -122,6 +122,7 @@ export function createFlight(host: HTMLDivElement, update: (data: Telemetry) => 
     engine(value:boolean){setEngine(state,value);emit();},
     autopilot(value:boolean){setAutopilot(state,value,route);emit();},
     parkingBrake(value:boolean){state.parkingBrake=value;state.braking=value;emit();},
+    soundReady() { return audio.ready(); },
     sound(value: boolean) { return audio.enable(value); }, volume(value: number) { audio.volume(value); },
     dispose() {
       disposed = true; cancelAnimationFrame(raf); observer.disconnect(); window.removeEventListener('keydown', keydown, {capture:true}); window.removeEventListener('keyup', keyup, {capture:true}); window.removeEventListener('blur', pause); document.removeEventListener('visibilitychange', visibility);
