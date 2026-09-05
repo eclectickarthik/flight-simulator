@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [react()],
   css: { postcss: { plugins: [tailwindcss()] } },
   build: {
-    outDir: fileURLToPath(new URL('./dist-static/flight', import.meta.url)),
+    outDir: fileURLToPath(new URL('./dist-static', import.meta.url)),
     emptyOutDir: true,
   },
 });

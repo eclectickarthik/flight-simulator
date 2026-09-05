@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed in Terminal, then add `/flight` if desired. The existing Vinext preview supports both `/` and `/flight` and uses the same app as the static hosting build.
+Open the local URL printed in Terminal, then add `/flight-simulator` if desired. The existing Vinext preview supports both `/` and `/flight-simulator` and uses the same app as the static hosting build.
 
 ## Publish free on GitHub Pages
 
@@ -21,38 +21,39 @@ This repository includes the complete hosting workflow. It runs only when you cl
 2. Under **Build and deployment → Source**, select **GitHub Actions**.
 3. Open **Actions → Publish flight simulator → Run workflow**, choose `main`, and click the green **Run workflow** button.
 4. Wait for the build and deploy jobs to turn green.
-5. Open `https://eclectickarthik.github.io/flight-simulator/flight/`.
+5. Open `https://eclectickarthik.github.io/flight-simulator/`.
 
-The project root redirects to `flight/`. All scripts, styling and audio use relative paths so they also work with the custom-domain address below.
+The repository name supplies the `/flight-simulator/` path on GitHub Pages. All scripts, styling and audio use relative paths. There is no homepage redirect.
 
 For future updates, push the changes and run the workflow again. No ElevenLabs key, Cloudflare token, or GitHub personal access token is needed in workflow secrets. GitHub provides the deployment workflow token automatically.
 
-## Use eclectickarthik.tech/flight/
+## Add the game to your personal website
 
-The intended address is `https://eclectickarthik.tech/flight/`.
+The intended address is **https://eclecticakarthik.com/flight-simulator/**. The homepage at **https://eclecticakarthik.com/** belongs to the personal website.
 
-If this domain already hosts another website, keep its existing DNS settings: `/flight` must be added to that site's host or routed there. DNS selects a host for the whole domain and cannot choose a host for just `/flight`.
+Cloudflare manages the domain. The hosting integration depends on where the personal website runs; domain registration alone does not determine that.
 
-If the domain is available to host this repository:
+### If your personal website is not built yet
 
-1. First get the default GitHub Pages URL above working.
-2. In **Settings → Pages → Custom domain**, enter `eclectickarthik.tech` (no `https://` and no `/flight`) and save.
-3. Sign in at get.tech and open the control panel for `eclectickarthik.tech`. Open **DNS Management → Manage DNS → A Records → Add A Record**. In this panel, leave **Host Name** blank for the main domain (it already shows the domain suffix). Add one record for each address below and keep the default TTL. Other DNS panels may use `@` for the same root-domain field:
+Keep this simulator repository as a separate project. When creating your personal site, use a repository named `eclectickarthik.github.io`, enable GitHub Pages there, and connect `eclecticakarthik.com` to that personal site's Pages settings. Its root will be your homepage. This existing `flight-simulator` project can then inherit that domain at `/flight-simulator/`.
 
-   | Type | Host | Value |
-   | --- | --- | --- |
-   | A | @ | 185.199.108.153 |
-   | A | @ | 185.199.109.153 |
-   | A | @ | 185.199.110.153 |
-   | A | @ | 185.199.111.153 |
+You can publish and try the simulator first at `https://eclectickarthik.github.io/flight-simulator/`, before building your personal site or changing DNS.
 
-4. Optionally add `CNAME`, host `www`, value `eclectickarthik.github.io`. If get.tech says its DNS service is inactive, check **Name Server Details**: the domain must use those nameservers for records entered in this panel to take effect. If it already uses another DNS provider, add the records there instead.
-5. Allow DNS and the HTTPS certificate to update. GitHub's **Enforce HTTPS** option can take up to 24 hours to become available; enable it when ready.
-6. Open `https://eclectickarthik.tech/flight/`.
+### If the personal website uses GitHub Pages
 
-Do not add `/flight` to a DNS record. Leave email records alone. If you already have conflicting website records, check their purpose before replacing them.
+Keep the custom domain `eclecticakarthik.com` on the **personal website's user-site repository** (`eclectickarthik.github.io`). Leave **Custom domain blank in this flight-simulator repository**. GitHub Pages project sites inherit the user site's domain and append the repository name, giving `/flight-simulator/`.
 
-Official instructions: [get.tech DNS records](https://controlpanel.tech/kb/servlet/KBServlet/faq471.html), [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [custom domain setup](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+If the personal site is currently a different project repository rather than the user-site repository, this inheritance does not apply; integrate the simulator into that site's output instead.
+
+### If the personal website uses Cloudflare Pages or another static host
+
+Build with `npm run build:static`. Copy the **contents** of `dist-static/` into a `flight-simulator/` directory within the personal website's published output, then deploy the personal website through its normal process. The personal homepage and other folders remain in place.
+
+If the personal website has application routing, ensure `/flight-simulator/` and its assets are served from that directory before any catch-all route. Requests to `/flight-simulator` should redirect to `/flight-simulator/` so relative asset URLs resolve correctly.
+
+Do not replace the personal site's entire output with `dist-static/`: that would put the game on the homepage. Do not set this game repository's Custom domain to the personal domain. DNS cannot route individual paths; the host handles `/flight-simulator/`.
+
+Official references: [GitHub Pages project-domain inheritance](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages), [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [Cloudflare DNS management](https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/).
 
 ## Phone and tablet controls
 
@@ -92,7 +93,7 @@ npx tsc --noEmit
 npm run build:static
 ```
 
-Static deployment output is `dist-static/`, with the simulator under `flight/`. Deploy this directory using GitHub Pages or another static host. To inspect it locally, run `python3 -m http.server 3002 --bind 127.0.0.1 --directory dist-static` and open `http://127.0.0.1:3002/flight/`.
+Static deployment output is `dist-static/`, containing the simulator entry page and assets. GitHub Pages mounts it under the repository name; for a personal website, mount its contents under `/flight-simulator/` as described above. To inspect it locally, run `python3 -m http.server 3002 --bind 127.0.0.1 --directory dist-static` and open `http://127.0.0.1:3002/`.
 
 `npm run build` retains the existing Vinext build. Changes to either hosting configuration do not duplicate the simulator source.
 

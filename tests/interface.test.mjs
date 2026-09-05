@@ -50,8 +50,8 @@ test('initial page has an accessible indeterminate loading bar before the simula
   assert.ok(html.includes('Touch controls: hold arrows'));
 });
 const {publicAsset}=await import(pathToFileURL(path.join(temp,'assets.mjs')));
-test('sound assets resolve under custom-domain /flight and GitHub project paths',()=>{
-  for(const base of ['https://eclectickarthik.tech/flight/','https://eclectickarthik.github.io/flight-simulator/flight/']){
+test('sound assets resolve under custom-domain /flight-simulator and GitHub project paths',()=>{
+  for(const base of ['https://eclecticakarthik.com/flight-simulator/','https://eclectickarthik.github.io/flight-simulator/']){
     const path=publicAsset('/audio/manifest.json','./');
     assert.equal(new URL(path,base).href,base+'audio/manifest.json');
   }
