@@ -37,7 +37,7 @@ If the domain is available to host this repository:
 
 1. First get the default GitHub Pages URL above working.
 2. In **Settings → Pages → Custom domain**, enter `eclectickarthik.tech` (no `https://` and no `/flight`) and save.
-3. At the company managing your domain's DNS, add these four `A` records, each with host/name `@`:
+3. Sign in at get.tech and open the control panel for `eclectickarthik.tech`. Open **DNS Management → Manage DNS → A Records → Add A Record**. In this panel, leave **Host Name** blank for the main domain (it already shows the domain suffix). Add one record for each address below and keep the default TTL. Other DNS panels may use `@` for the same root-domain field:
 
    | Type | Host | Value |
    | --- | --- | --- |
@@ -46,13 +46,13 @@ If the domain is available to host this repository:
    | A | @ | 185.199.110.153 |
    | A | @ | 185.199.111.153 |
 
-4. Optionally add `CNAME`, host `www`, value `eclectickarthik.github.io`.
+4. Optionally add `CNAME`, host `www`, value `eclectickarthik.github.io`. If get.tech says its DNS service is inactive, check **Name Server Details**: the domain must use those nameservers for records entered in this panel to take effect. If it already uses another DNS provider, add the records there instead.
 5. Allow DNS and the HTTPS certificate to update. GitHub's **Enforce HTTPS** option can take up to 24 hours to become available; enable it when ready.
 6. Open `https://eclectickarthik.tech/flight/`.
 
 Do not add `/flight` to a DNS record. Leave email records alone. If you already have conflicting website records, check their purpose before replacing them.
 
-Official instructions: [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [custom domain setup](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+Official instructions: [get.tech DNS records](https://controlpanel.tech/kb/servlet/KBServlet/faq471.html), [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [custom domain setup](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
 
 ## Phone and tablet controls
 
