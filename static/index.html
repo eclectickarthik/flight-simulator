@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#091923" />
+  <meta name="description" content="Fly an Airbus A320 with manual controls, autopilot, three airports, weather and day/night scenery." />
+  <title>A320 Flight Deck</title>
+  <link rel="icon" href="/favicon.svg" />
+  <style>body{margin:0;background:#091923;color:#f2f6f7;font-family:Arial,sans-serif}.boot{height:100dvh;display:grid;place-content:center;gap:18px;text-align:center;padding:0 24px}.boot h1{font-size:24px;font-weight:500}.boot p{font-size:16px}.boot progress{width:240px;max-width:100%;margin:auto;accent-color:#c4edb6}.boot small{color:#c3d0d5}</style>
+</head>
+<body>
+  <div id="root"><div class="boot"><h1>A320 Flight Deck</h1><p role="status">Downloading flight simulator…</p><progress aria-label="Loading flight simulator"></progress><small>First visits can take longer.</small></div></div>
+  <noscript>This flight simulator needs JavaScript. Enable it and reload this page.</noscript>
+  <script type="module">
+    import('./main.tsx').catch(() => {
+      const boot = document.querySelector('.boot');
+      if (boot) {
+        boot.querySelector('[role="status"]').textContent = 'Download interrupted. Check your connection and reload.';
+        boot.querySelector('progress').remove();
+        const retry = document.createElement('button');
+        retry.textContent = 'Reload simulator';
+        retry.onclick = () => location.reload();
+        boot.appendChild(retry);
+      }
+    });
+  </script>
+</body>
+</html>
