@@ -15,8 +15,28 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export const metadata: Metadata = {
-  title: 'A320 Flight Deck',
-  description: 'A cinematic interactive Airbus A320 flight experience. Take off, cruise and land in Three.js.',
+  title: 'Flight Deck ✈️',
+  description: 'a browser based flight simulator',
+  alternates: { canonical: 'https://eclectickarthik.com/flight-simulator/' },
+  openGraph: {
+    type: 'website',
+    title: 'Flight Deck ✈️',
+    description: 'a browser based flight simulator',
+    url: 'https://eclectickarthik.com/flight-simulator/',
+    images: [{
+      url: 'https://eclectickarthik.com/flight-simulator/flight-deck-preview.png',
+      width: 1920,
+      height: 1080,
+      type: 'image/png',
+      alt: 'Flight Deck simulator showing a white-and-blue Airbus A320 parked in a hangar with flight controls and airport map.',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Flight Deck ✈️',
+    description: 'a browser based flight simulator',
+    images: ['https://eclectickarthik.com/flight-simulator/flight-deck-preview.png'],
+  },
 };
 
 export default function RootLayout({
