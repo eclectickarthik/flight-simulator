@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export const metadata: Metadata = {
-  title: 'Flight Deck ✈️',
+  title: 'Flight Simulator ✈️',
   description: 'a browser based flight simulator',
   alternates: { canonical: 'https://eclectickarthik.com/flight-simulator/' },
   openGraph: {
     type: 'website',
-    title: 'Flight Deck ✈️',
+    title: 'Flight Simulator ✈️',
     description: 'a browser based flight simulator',
     url: 'https://eclectickarthik.com/flight-simulator/',
     images: [{
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flight Deck ✈️',
+    title: 'Flight Simulator ✈️',
     description: 'a browser based flight simulator',
     images: ['https://eclectickarthik.com/flight-simulator/flight-deck-preview.png'],
   },
