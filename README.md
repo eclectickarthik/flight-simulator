@@ -29,19 +29,19 @@ For future updates, push the changes and run the workflow again. No ElevenLabs k
 
 ## Add the game to your personal website
 
-The intended address is **https://eclecticakarthik.com/flight-simulator/**. The homepage at **https://eclecticakarthik.com/** belongs to the personal website.
+The intended address is **https://eclectickarthik.com/flight-simulator/**. The homepage at **https://eclectickarthik.com/** belongs to the personal website.
 
 Cloudflare manages the domain. The hosting integration depends on where the personal website runs; domain registration alone does not determine that.
 
 ### If your personal website is not built yet
 
-Keep this simulator repository as a separate project. When creating your personal site, use a repository named `eclectickarthik.github.io`, enable GitHub Pages there, and connect `eclecticakarthik.com` to that personal site's Pages settings. Its root will be your homepage. This existing `flight-simulator` project can then inherit that domain at `/flight-simulator/`.
+Keep this simulator repository as a separate project. When creating your personal site, use a repository named `eclectickarthik.github.io`, enable GitHub Pages there, and connect `eclectickarthik.com` to that personal site's Pages settings. Its root will be your homepage. This existing `flight-simulator` project can then inherit that domain at `/flight-simulator/`.
 
 You can publish and try the simulator first at `https://eclectickarthik.github.io/flight-simulator/`, before building your personal site or changing DNS.
 
 ### If the personal website uses GitHub Pages
 
-Keep the custom domain `eclecticakarthik.com` on the **personal website's user-site repository** (`eclectickarthik.github.io`). Leave **Custom domain blank in this flight-simulator repository**. GitHub Pages project sites inherit the user site's domain and append the repository name, giving `/flight-simulator/`.
+Keep the custom domain `eclectickarthik.com` on the **personal website's user-site repository** (`eclectickarthik.github.io`). Leave **Custom domain blank in this flight-simulator repository**. GitHub Pages project sites inherit the user site's domain and append the repository name, giving `/flight-simulator/`.
 
 If the personal site is currently a different project repository rather than the user-site repository, this inheritance does not apply; integrate the simulator into that site's output instead.
 

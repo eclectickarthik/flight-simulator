@@ -51,7 +51,7 @@ test('initial page has an accessible indeterminate loading bar before the simula
 });
 const {publicAsset}=await import(pathToFileURL(path.join(temp,'assets.mjs')));
 test('sound assets resolve under custom-domain /flight-simulator and GitHub project paths',()=>{
-  for(const base of ['https://eclecticakarthik.com/flight-simulator/','https://eclectickarthik.github.io/flight-simulator/']){
+  for(const base of ['https://eclectickarthik.com/flight-simulator/','https://eclectickarthik.github.io/flight-simulator/']){
     const path=publicAsset('/audio/manifest.json','./');
     assert.equal(new URL(path,base).href,base+'audio/manifest.json');
   }
